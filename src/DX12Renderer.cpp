@@ -7,6 +7,10 @@
 
 // Simple vertex shader
 const char* vertexShader = R"(
+cbuffer TransformBuffer : register(b0) {
+    float4x4 worldViewProj;
+};
+
 struct VS_INPUT {
     float3 position : POSITION;
     float4 color : COLOR;
@@ -19,7 +23,7 @@ struct PS_INPUT {
 
 PS_INPUT main(VS_INPUT input) {
     PS_INPUT output;
-    output.position = float4(input.position * 2.0f, 1.0f);
+    output.position = mul(float4(input.position, 1.0f), worldViewProj);
     output.color = input.color;
     return output;
 }
@@ -263,10 +267,16 @@ bool DX12Renderer::Init(HWND hwnd) {
 
     cmdList->Close(); // Close initially
 
-    // 7. Create root signature
+    // 7. Create root signature with constant buffer
+    D3D12_ROOT_PARAMETER rootParam = {};
+    rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+    rootParam.Descriptor.ShaderRegister = 0;
+    rootParam.Descriptor.RegisterSpace = 0;
+    rootParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+
     D3D12_ROOT_SIGNATURE_DESC rootSigDesc = {};
-    rootSigDesc.NumParameters = 0;
-    rootSigDesc.pParameters = nullptr;
+    rootSigDesc.NumParameters = 1;
+    rootSigDesc.pParameters = &rootParam;
     rootSigDesc.NumStaticSamplers = 0;
     rootSigDesc.pStaticSamplers = nullptr;
     rootSigDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
@@ -333,12 +343,45 @@ bool DX12Renderer::Init(HWND hwnd) {
     // 10. Create cube mesh
     CreateCubeMesh();
 
+    // 11. Create constant buffer
+    D3D12_HEAP_PROPERTIES cbHeapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+    D3D12_RESOURCE_DESC cbDesc = CD3DX12_RESOURCE_DESC::Buffer((sizeof(TransformData) + 255) & ~255);
+    
+    if (FAILED(device->CreateCommittedResource(
+        &cbHeapProps,
+        D3D12_HEAP_FLAG_NONE,
+        &cbDesc,
+        D3D12_RESOURCE_STATE_GENERIC_READ,
+        nullptr,
+        IID_PPV_ARGS(&constantBuffer)))) {
+        throw std::runtime_error("Failed to create constant buffer");
+    }
+
+    // Map the constant buffer and keep it mapped
+    if (FAILED(constantBuffer->Map(0, nullptr, (void**)&pCbData))) {
+        throw std::runtime_error("Failed to map constant buffer");
+    }
+
     return true;
 }
 
 void DX12Renderer::Render() {
     // Clear color - Black background
     static const FLOAT clearColor[] = {0.0f, 0.0f, 0.0f, 1.0f};
+
+    // Update rotation
+    rotationY += 0.02f;
+    if (rotationY > XM_2PI) rotationY -= XM_2PI;
+
+    // Create rotation matrix
+    XMMATRIX rotMatrix = XMMatrixRotationY(rotationY);
+    XMMATRIX viewMatrix = XMMatrixTranslation(0.0f, 0.0f, 2.0f);
+    XMMATRIX projMatrix = XMMatrixPerspectiveFovLH(XM_PIDIV4, 800.0f / 600.0f, 0.1f, 100.0f);
+    XMMATRIX worldViewProj = XMMatrixMultiply(rotMatrix, XMMatrixMultiply(viewMatrix, projMatrix));
+    
+    // Transpose for shader (row-major to column-major)
+    worldViewProj = XMMatrixTranspose(worldViewProj);
+    XMStoreFloat4x4(&pCbData->worldViewProj, worldViewProj);
 
     cmdAllocator->Reset();
     cmdList->Reset(cmdAllocator.Get(), nullptr);
@@ -368,6 +411,9 @@ void DX12Renderer::Render() {
     cmdList->RSSetScissorRects(1, &scissorRect);
     
     cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+
+    // Set constant buffer
+    cmdList->SetGraphicsRootConstantBufferView(0, constantBuffer->GetGPUVirtualAddress());
 
     // Render cube
     cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);

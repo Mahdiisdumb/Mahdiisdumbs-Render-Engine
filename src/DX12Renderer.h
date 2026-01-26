@@ -13,6 +13,10 @@ struct Vertex {
     XMFLOAT4 color;
 };
 
+struct TransformData {
+    XMFLOAT4X4 worldViewProj;
+};
+
 class DX12Renderer {
 public:
     DX12Renderer() = default;
@@ -40,9 +44,12 @@ private:
     // Mesh data
     ComPtr<ID3D12Resource> vertexBuffer;
     ComPtr<ID3D12Resource> indexBuffer;
+    ComPtr<ID3D12Resource> constantBuffer;
     D3D12_VERTEX_BUFFER_VIEW vertexBufferView;
     D3D12_INDEX_BUFFER_VIEW indexBufferView;
+    TransformData* pCbData = nullptr;
     UINT indexCount = 0;
+    float rotationY = 0.0f;
 
     UINT rtvDescriptorSize = 0;
     UINT frameIndex = 0;
