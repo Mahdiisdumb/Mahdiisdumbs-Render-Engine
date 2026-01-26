@@ -1,6 +1,9 @@
 #include "DX12Renderer.h"
 #include <stdexcept>
 #include <iostream>
+#include <d3d12.h>
+#include <dxgi1_6.h>
+#include "d3dx12.h"  // <--- add this
 
 DX12Renderer::DX12Renderer(HWND hwnd, UINT width, UINT height) {
     InitPipeline(hwnd, width, height);
