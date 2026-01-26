@@ -1,39 +1,38 @@
-#include "DX12Renderer.h"
 #include <windows.h>
-#include <iostream>
+#include "DX12Renderer.h"
+#include "Camera.h"
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
-    std::cout << "Mahdiisdumbs Render Engine starting..." << std::endl;
-
-    // Create window
-    WNDCLASS wc = {};
-    wc.lpfnWndProc = DefWindowProc;
+int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR, int nCmdShow) {
+    WNDCLASSW wc = {};
+    wc.lpfnWndProc = DefWindowProcW;
     wc.hInstance = hInstance;
     wc.lpszClassName = L"MahdiisdumbsRE";
-    RegisterClass(&wc);
+    RegisterClassW(&wc);
 
-    HWND hwnd = CreateWindowEx(
+    HWND hwnd = CreateWindowExW(
         0,
         wc.lpszClassName,
         L"Mahdiisdumbs Render Engine",
         WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT, CW_USEDEFAULT, 800, 600,
-        nullptr, nullptr, hInstance, nullptr);
+        nullptr, nullptr, hInstance, nullptr
+    );
 
     ShowWindow(hwnd, nCmdShow);
 
-    DX12Renderer renderer(hwnd, 800, 600);
+    DX12Renderer renderer;
+    if (!renderer.Init(hwnd)) return -1;
 
-    // Main loop
     MSG msg = {};
     while (msg.message != WM_QUIT) {
-        if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
+        if (PeekMessageW(&msg, nullptr, 0, 0, PM_REMOVE)) {
             TranslateMessage(&msg);
-            DispatchMessage(&msg);
+            DispatchMessageW(&msg);
         } else {
-            renderer.Render();
+            renderer.RenderCube();  // renders a cube
         }
     }
 
+    renderer.Shutdown();
     return 0;
 }
