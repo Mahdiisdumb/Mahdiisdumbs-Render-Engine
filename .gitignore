@@ -24,3 +24,4 @@ libs/imgui/*.exe
 *.temp
 Thumbs.db
 .DS_Store
+.vs/
