@@ -1,9 +1,8 @@
 #pragma once
-#include <d3d12.h>
 #include <dxgi1_6.h>
 #include <wrl.h>
 #include <DirectXMath.h>
-#include "d3dx12/d3dx12.h"  // Make sure path matches
+#include "d3dx12/d3dx12.h"
 
 using namespace Microsoft::WRL;
 using namespace DirectX;

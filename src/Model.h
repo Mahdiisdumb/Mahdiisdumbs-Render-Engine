@@ -4,7 +4,8 @@
 #include "Bone.h"
 #include <vector>
 #include <string>
-#include <d3d12.h>
+#include "d3dx12/d3dx12.h"
+
 
 class Model {
 public:
@@ -13,7 +14,7 @@ public:
     void Draw();
     void ApplyBoneTransform(int boneIndex, const glm::vec3& pos, const glm::quat& rot);
 
-private:
+public:
     std::vector<Bone> bones;
     Texture texture;
 };

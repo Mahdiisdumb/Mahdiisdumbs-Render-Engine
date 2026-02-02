@@ -1,6 +1,7 @@
 #pragma once
-#include <d3d12.h>
 #include <string>
+#include "d3dx12/d3dx12.h"
+
 
 class Texture {
 public:

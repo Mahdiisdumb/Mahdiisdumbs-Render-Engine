@@ -1,9 +1,7 @@
 #pragma once
-#include <d3d12.h>
-#include <dxgi1_6.h>
 #include "Scene.h"
 #include "Camera.h"
-
+#include <d3dx12/d3d12.h>
 class Renderer {
 public:
     void Init(HWND hwnd);
