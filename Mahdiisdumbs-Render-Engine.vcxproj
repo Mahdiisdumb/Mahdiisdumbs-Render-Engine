@@ -140,8 +140,8 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Users\Mahdi\source\repos\Mahdiisdumbs-Render-Engine\Mahdiisdumbs-Render-Engine\libs\</AdditionalIncludeDirectories>
-      <AdditionalUsingDirectories>C:\Users\Mahdi\source\repos\Mahdiisdumbs-Render-Engine\Mahdiisdumbs-Render-Engine\libs\</AdditionalUsingDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)libs</AdditionalIncludeDirectories>
+      <AdditionalUsingDirectories>$(SolutionDir)libs</AdditionalUsingDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

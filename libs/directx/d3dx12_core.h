@@ -1603,7 +1603,6 @@ inline const CD3DX12_RESOURCE_DESC1* D3DX12ConditionallyExpandAPIDesc(
             {
                 LclDesc.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
             }
-#ifdef D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT
             else if (!(tightAlignmentSupported && (pDesc->Flags & D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT))
                     || (pDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_CROSS_ADAPTER))
             {
@@ -1618,13 +1617,6 @@ inline const CD3DX12_RESOURCE_DESC1* D3DX12ConditionallyExpandAPIDesc(
                 else
                     LclDesc.Alignment = D3D12_TIGHT_ALIGNMENT_MIN_PLACED_RESOURCE_ALIGNMENT;
 			}
-#else
-            else
-            {
-                LclDesc.Alignment =
-                    (pDesc->SampleDesc.Count > 1 ? D3D12_DEFAULT_MSAA_RESOURCE_PLACEMENT_ALIGNMENT : D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT);
-            }
-#endif
         }
         return &LclDesc;
     }
@@ -2058,7 +2050,6 @@ struct CD3DX12_RT_FORMAT_ARRAY : public D3D12_RT_FORMAT_ARRAY
 };
 
 //------------------------------------------------------------------------------------------------
-#ifdef D3D12_SERIALIZED_ROOT_SIGNATURE_DESC
 struct CD3DX12_SERIALIZED_ROOT_SIGNATURE_DESC : public D3D12_SERIALIZED_ROOT_SIGNATURE_DESC
 {
     CD3DX12_SERIALIZED_ROOT_SIGNATURE_DESC() = default;
@@ -2077,6 +2068,5 @@ struct CD3DX12_SERIALIZED_ROOT_SIGNATURE_DESC : public D3D12_SERIALIZED_ROOT_SIG
         SerializedBlobSizeInBytes = size;
     }
 };
-#endif
 
 

@@ -2,7 +2,7 @@
 #include <dxgi1_6.h>
 #include <wrl.h>
 #include <DirectXMath.h>
-#include <directx/d3dx12.h>
+#include "directx/d3dx12.h"
 
 using namespace Microsoft::WRL;
 using namespace DirectX;
