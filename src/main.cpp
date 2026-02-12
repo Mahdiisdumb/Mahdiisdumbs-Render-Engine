@@ -11,15 +11,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
+int main() {
     try {
+        HINSTANCE hInstance = GetModuleHandle(nullptr);
+
+        // Register window class
         WNDCLASSW wc = {};
         wc.lpfnWndProc = WndProc;
         wc.hInstance = hInstance;
         wc.lpszClassName = L"MahdiisdumbsRE";
-
         RegisterClassW(&wc);
 
+        // Create window
         HWND hwnd = CreateWindowExW(
             0,
             wc.lpszClassName,
@@ -29,28 +32,36 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
             nullptr, nullptr, hInstance, nullptr
         );
 
-        ShowWindow(hwnd, nCmdShow);
-
-        DX12Renderer renderer;
-        if (!renderer.Init(hwnd)) {
-            MessageBoxW(nullptr, L"Failed to initialize renderer", L"Error", MB_OK);
+        if (!hwnd) {
+            std::cerr << "Failed to create window\n";
             return -1;
         }
 
+        ShowWindow(hwnd, SW_SHOW);
+
+        // Initialize DX12 renderer
+        DX12Renderer renderer;
+        if (!renderer.Init(hwnd)) {
+            std::cerr << "Failed to initialize renderer\n";
+            return -1;
+        }
+
+        // Main message loop
         MSG msg = {};
         while (msg.message != WM_QUIT) {
             if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
                 TranslateMessage(&msg);
                 DispatchMessage(&msg);
-            } else {
+            }
+            else {
                 renderer.Render();
             }
         }
 
-        return 0;
+        return static_cast<int>(msg.wParam);
     }
     catch (const std::exception& e) {
-        MessageBoxA(nullptr, e.what(), "Fatal Error", MB_OK | MB_ICONERROR);
+        std::cerr << "Fatal Error: " << e.what() << "\n";
         return -1;
     }
 }
