@@ -4,7 +4,7 @@
 #include "Bone.h"
 #include <vector>
 #include <string>
-#include "d3dx12/d3dx12.h"
+#include "d3dx12.h"
 
 
 class Model {
