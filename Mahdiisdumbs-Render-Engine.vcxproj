@@ -18,6 +18,26 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\Camera.cpp" />
+    <ClCompile Include="src\DX12Renderer.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\Model.cpp" />
+    <ClCompile Include="src\Texture.cpp" />
+    <ClCompile Include="src\Utils.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Bone.h" />
+    <ClInclude Include="src\Camera.h" />
+    <ClInclude Include="src\DX12Renderer.h" />
+    <ClInclude Include="src\ImguiWrapper.h" />
+    <ClInclude Include="src\Math.h" />
+    <ClInclude Include="src\Model.h" />
+    <ClInclude Include="src\Renderer.h" />
+    <ClInclude Include="src\Scene.h" />
+    <ClInclude Include="src\Texture.h" />
+    <ClInclude Include="src\Utils.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>18.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
@@ -127,26 +147,6 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="..\src\Camera.cpp" />
-    <ClCompile Include="..\src\DX12Renderer.cpp" />
-    <ClCompile Include="..\src\main.cpp" />
-    <ClCompile Include="..\src\Model.cpp" />
-    <ClCompile Include="..\src\Texture.cpp" />
-    <ClCompile Include="..\src\Utils.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\src\Bone.h" />
-    <ClInclude Include="..\src\Camera.h" />
-    <ClInclude Include="..\src\DX12Renderer.h" />
-    <ClInclude Include="..\src\ImguiWrapper.h" />
-    <ClInclude Include="..\src\Math.h" />
-    <ClInclude Include="..\src\Model.h" />
-    <ClInclude Include="..\src\Renderer.h" />
-    <ClInclude Include="..\src\Scene.h" />
-    <ClInclude Include="..\src\Texture.h" />
-    <ClInclude Include="..\src\Utils.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
