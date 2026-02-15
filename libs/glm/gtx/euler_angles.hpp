@@ -19,8 +19,9 @@
 #include "../glm.hpp"
 
 #ifndef GLM_ENABLE_EXPERIMENTAL
-#	error "GLM: GLM_GTX_euler_angles is an experimental extension and may change in the future. Use #define GLM_ENABLE_EXPERIMENTAL before including it, if you really want to use it."
-#elif GLM_MESSAGES == GLM_ENABLE && !defined(GLM_EXT_INCLUDED)
+#define GLM_ENABLE_EXPERIMENTAL
+#endif
+#if defined(GLM_MESSAGES) && GLM_MESSAGES == GLM_ENABLE && !defined(GLM_EXT_INCLUDED)
 #	pragma message("GLM: GLM_GTX_euler_angles extension included")
 #endif
 

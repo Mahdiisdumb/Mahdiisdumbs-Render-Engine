@@ -3,6 +3,8 @@
 #include <wrl.h>
 #include <DirectXMath.h>
 #include "directx/d3dx12.h"
+#include "Camera.h"
+#include "Model.h"
 
 using namespace Microsoft::WRL;
 using namespace DirectX;
@@ -23,6 +25,17 @@ public:
 
     bool Init(HWND hwnd);
     void Render();
+    void UpdateCamera(float dt);
+
+    // expose for other systems
+    ID3D12Device* GetDevice() { return device.Get(); }
+    ID3D12GraphicsCommandList* GetCommandList() { return cmdList.Get(); }
+    ID3D12CommandQueue* GetCommandQueue() { return cmdQueue.Get(); }
+    bool LoadModel(const std::string& path);
+    bool LoadTexture(const std::string& path);
+
+    Camera camera;
+    Model model;
 
 private:
     void CreateCubeMesh();

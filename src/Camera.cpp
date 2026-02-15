@@ -1,8 +1,12 @@
 #include "Camera.h"
-#include <glm/gtx/euler_angles.hpp>
+#include <DirectXMath.h>
 
-glm::mat4 Camera::GetViewMatrix() const {
-    glm::mat4 rot = glm::yawPitchRoll(rotation.y, rotation.x, rotation.z);
-    glm::mat4 trans = glm::translate(glm::mat4(1.0f), -position);
-    return rot * trans;
+DirectX::XMMATRIX Camera::GetViewMatrix() const {
+    using namespace DirectX;
+    XMVECTOR pos = XMLoadFloat3(&position);
+    XMMATRIX rotMat = XMMatrixRotationRollPitchYaw(rotation.x, rotation.y, rotation.z);
+    XMVECTOR forward = XMVector3TransformNormal(XMVectorSet(0, 0, 1, 0), rotMat);
+    XMVECTOR target = XMVectorAdd(pos, forward);
+    XMVECTOR up = XMVector3TransformNormal(XMVectorSet(0,1,0,0), rotMat);
+    return XMMatrixLookAtLH(pos, target, up);
 }

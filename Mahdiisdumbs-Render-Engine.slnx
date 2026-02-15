@@ -3,5 +3,7 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="Mahdiisdumbs-Render-Engine.vcxproj" Id="b15fda43-c060-41f6-8885-67d9c53b526e" />
+  <Project Path="Mahdiisdumbs-Render-Engine.vcxproj" Id="b15fda43-c060-41f6-8885-67d9c53b526e">
+    <BuildType Solution="Debug|x64" Project="Release" />
+  </Project>
 </Solution>

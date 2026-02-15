@@ -1,5 +1,6 @@
 #include <windows.h>
 #include "DX12Renderer.h"
+#include "ImguiWrapper.h"
 #include <iostream>
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
@@ -46,6 +47,9 @@ int main() {
             return -1;
         }
 
+        // Initialize ImGui (optional)
+        ImGuiWrapper::Init(hwnd, renderer.GetDevice(), renderer.GetCommandQueue(), DXGI_FORMAT_R8G8B8A8_UNORM); // Re-initialized ImGui
+
         // Main message loop
         MSG msg = {};
         while (msg.message != WM_QUIT) {
@@ -54,7 +58,16 @@ int main() {
                 DispatchMessage(&msg);
             }
             else {
+                ImGuiWrapper::NewFrame();
+
+                ImGuiWrapper::BeginWindow("Inspector");
+                ImGuiWrapper::Text("Use WASD + mouse to move camera");
+                ImGuiWrapper::EndWindow();
+
+                renderer.UpdateCamera(1.0f / 60.0f);
                 renderer.Render();
+
+                ImGuiWrapper::Render(renderer.GetCommandList());
             }
         }
 

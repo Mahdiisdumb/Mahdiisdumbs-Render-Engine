@@ -1,7 +1,9 @@
 #pragma once
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/glm.hpp>
-#include <glm/gtc/quaternion.hpp>
-#include <glm/gtx/quaternion.hpp>
-#include <glm/gtx/euler_angles.hpp>
-#include <glm/gtx/component_wise.hpp>
+// Lightweight math header: prefer DirectXMath. If GLM is available, project can include it separately.
+#include <DirectXMath.h>
+
+namespace math {
+    using namespace DirectX;
+    using vec3 = XMFLOAT3;
+    using quat = XMFLOAT4; // (x,y,z,w)
+}
