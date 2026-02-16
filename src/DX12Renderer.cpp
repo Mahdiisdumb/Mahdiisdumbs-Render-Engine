@@ -33,7 +33,9 @@ PS_INPUT main(VS_INPUT input) {
     output.uv = input.uv;
     return output;
 }
+)";
 
+// Move C++ method implementations outside of the shader string
 bool DX12Renderer::LoadModel(const std::string& path) {
     if (!model.LoadFBX(path, device.Get(), cmdList.Get())) return false;
     // If model has a pending texture path, try loading it into GPU
@@ -46,7 +48,6 @@ bool DX12Renderer::LoadModel(const std::string& path) {
 bool DX12Renderer::LoadTexture(const std::string& path) {
     return model.LoadTexture(path, device.Get(), cmdList.Get());
 }
-)";
 
 // Simple pixel shader
 const char* pixelShader = R"(
