@@ -2,6 +2,24 @@
 #include "DX12Renderer.h"
 #include "ImguiWrapper.h"
 #include <iostream>
+#include <DbgHelp.h>
+
+#pragma comment(lib, "dbghelp.lib")
+
+static LONG WINAPI MyExceptionFilter(EXCEPTION_POINTERS* pExceptionPointers) {
+    // Write a minidump to disk for post-mortem analysis
+    HANDLE hFile = CreateFileA("crash.dmp", GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (hFile != INVALID_HANDLE_VALUE) {
+        MINIDUMP_EXCEPTION_INFORMATION mei;
+        mei.ThreadId = GetCurrentThreadId();
+        mei.ExceptionPointers = pExceptionPointers;
+        mei.ClientPointers = FALSE;
+        MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), hFile, MiniDumpWithDataSegs, &mei, nullptr, nullptr);
+        CloseHandle(hFile);
+    }
+    MessageBoxA(nullptr, "The application crashed. A crash dump was written to crash.dmp", "Crash", MB_OK | MB_ICONERROR);
+    return EXCEPTION_EXECUTE_HANDLER;
+}
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
@@ -14,6 +32,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
 int main() {
     try {
+        SetUnhandledExceptionFilter(MyExceptionFilter);
         HINSTANCE hInstance = GetModuleHandle(nullptr);
 
         // Register window class
@@ -60,14 +79,69 @@ int main() {
             else {
                 ImGuiWrapper::NewFrame();
 
+                // Hotkeys handling
+                bool ctrl = (GetAsyncKeyState(VK_CONTROL) & 0x8000) != 0;
+                bool alt = (GetAsyncKeyState(VK_MENU) & 0x8000) != 0;
+
+                // Ctrl+O -> Open model
+                static bool prevCtrlO = false;
+                bool curCtrlO = (GetAsyncKeyState('O') & 0x8000) != 0 && ctrl;
+                if (curCtrlO && !prevCtrlO) {
+                    OPENFILENAMEA ofn;
+                    CHAR szFile[MAX_PATH] = {0};
+                    ZeroMemory(&ofn, sizeof(ofn));
+                    ofn.lStructSize = sizeof(ofn);
+                    ofn.hwndOwner = hwnd;
+                    ofn.lpstrFile = szFile;
+                    ofn.nMaxFile = MAX_PATH;
+                    ofn.lpstrFilter = "Model Files\0*.fbx;*.obj\0All\0*.*\0";
+                    ofn.Flags = OFN_FILEMUSTEXIST;
+                    if (GetOpenFileNameA(&ofn)) {
+                        renderer.LoadModel(szFile);
+                        std::cout << "Loaded model: " << szFile << std::endl;
+                    }
+                }
+                prevCtrlO = curCtrlO;
+
+                // Ctrl+T -> Open texture
+                static bool prevCtrlT = false;
+                bool curCtrlT = (GetAsyncKeyState('T') & 0x8000) != 0 && ctrl;
+                if (curCtrlT && !prevCtrlT) {
+                    OPENFILENAMEA ofn;
+                    CHAR szFile[MAX_PATH] = {0};
+                    ZeroMemory(&ofn, sizeof(ofn));
+                    ofn.lStructSize = sizeof(ofn);
+                    ofn.hwndOwner = hwnd;
+                    ofn.lpstrFile = szFile;
+                    ofn.nMaxFile = MAX_PATH;
+                    ofn.lpstrFilter = "Image Files\0*.png;*.jpg;*.jpeg;*.dds\0All\0*.*\0";
+                    ofn.Flags = OFN_FILEMUSTEXIST;
+                    if (GetOpenFileNameA(&ofn)) {
+                        renderer.LoadTexture(szFile);
+                        std::cout << "Loaded texture: " << szFile << std::endl;
+                    }
+                }
+                prevCtrlT = curCtrlT;
+
+                // Ctrl+Alt+C -> Toggle color picker
+                static bool prevColor = false;
+                bool curColor = (GetAsyncKeyState('C') & 0x8000) != 0 && ctrl && alt;
+                if (curColor && !prevColor) {
+                    ImGuiWrapper::g_showColorPicker = !ImGuiWrapper::g_showColorPicker;
+                }
+                prevColor = curColor;
+
                 ImGuiWrapper::BeginWindow("Inspector");
-                ImGuiWrapper::Text("Use WASD + mouse to move camera");
+                ImGuiWrapper::Text("Use WASD + RMB to move and look. Shift to sprint.");
                 ImGuiWrapper::EndWindow();
 
                 renderer.UpdateCamera(1.0f / 60.0f);
                 renderer.Render();
 
+                // Render ImGui UI and helper windows
                 ImGuiWrapper::Render(renderer.GetCommandList());
+                ImGuiWrapper::RenderImportUI(&renderer);
+                ImGuiWrapper::RenderColorPicker();
             }
         }
 

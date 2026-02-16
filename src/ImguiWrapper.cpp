@@ -1,4 +1,6 @@
-#include "ImguiWrapper.h"
+#include "ImguiWrapper.h"// Storage for header-declared static flags (always present regardless of USE_IMGUI)
+bool ImGuiWrapper::g_showImportWindow = false;
+bool ImGuiWrapper::g_showColorPicker = false;
 
 #ifdef USE_IMGUI
 #include "imgui/imgui.h"
@@ -69,11 +71,38 @@ void ImGuiWrapper::BeginWindow(const char* title) { ImGui::Begin(title); }
 void ImGuiWrapper::Text(const char* text) { ImGui::Text("%s", text); }
 void ImGuiWrapper::EndWindow() { ImGui::End(); }
 
+// High level UI helpers (definitions)
+bool ImGuiWrapper::g_showImportWindow = false;
+bool ImGuiWrapper::g_showColorPicker = false;
+static float g_color[4] = {1.0f, 0.75f, 0.8f, 1.0f};
+
+void ImGuiWrapper::RenderImportUI(DX12Renderer* renderer) {
+    if (!g_showImportWindow) return;
+    ImGui::Begin("Importer", &g_showImportWindow);
+    if (ImGui::Button("Load Model (Ctrl+O)")) {
+        // user will use hotkey; actual file dialog handled externally
+    }
+    if (ImGui::Button("Load Texture (Ctrl+T)")) {
+    }
+    ImGui::End();
+}
+
+void ImGuiWrapper::RenderColorPicker() {
+    if (!g_showColorPicker) return;
+    ImGui::Begin("Color Picker", &g_showColorPicker);
+    ImGui::ColorEdit4("Color", g_color);
+    ImGui::End();
+}
+
 #else
 
 bool ImGuiWrapper::Init(HWND, ID3D12Device*, ID3D12CommandQueue*, DXGI_FORMAT, int) { return false; }
 void ImGuiWrapper::NewFrame() {}
 void ImGuiWrapper::Render(ID3D12GraphicsCommandList*) {}
 void ImGuiWrapper::Shutdown() {}
+
+// Non-UI (no ImGui) stubs
+void ImGuiWrapper::RenderImportUI(DX12Renderer* renderer) { (void)renderer; }
+void ImGuiWrapper::RenderColorPicker() {}
 
 #endif

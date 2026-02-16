@@ -1,7 +1,10 @@
 #include "DX12Renderer.h"
+#include "ImguiWrapper.h"
 #include <stdexcept>
 #include <vector>
 #include <d3dcompiler.h>
+#include <Windows.h>
+#include <iostream>
 
 #pragma comment(lib, "d3dcompiler.lib")
 
@@ -14,18 +17,34 @@ cbuffer TransformBuffer : register(b0) {
 struct VS_INPUT {
     float3 position : POSITION;
     float4 color : COLOR;
+    float2 uv : TEXCOORD0;
 };
 
 struct PS_INPUT {
     float4 position : SV_POSITION;
     float4 color : COLOR;
+    float2 uv : TEXCOORD0;
 };
 
 PS_INPUT main(VS_INPUT input) {
     PS_INPUT output;
     output.position = mul(float4(input.position, 1.0f), worldViewProj);
     output.color = input.color;
+    output.uv = input.uv;
     return output;
+}
+
+bool DX12Renderer::LoadModel(const std::string& path) {
+    if (!model.LoadFBX(path, device.Get(), cmdList.Get())) return false;
+    // If model has a pending texture path, try loading it into GPU
+    if (!model.pendingTexturePath.empty()) {
+        model.LoadTexture(model.pendingTexturePath, device.Get(), cmdList.Get());
+    }
+    return true;
+}
+
+bool DX12Renderer::LoadTexture(const std::string& path) {
+    return model.LoadTexture(path, device.Get(), cmdList.Get());
 }
 )";
 
@@ -34,9 +53,11 @@ const char* pixelShader = R"(
 struct PS_INPUT {
     float4 position : SV_POSITION;
     float4 color : COLOR;
+    float2 uv : TEXCOORD0;
 };
 
 float4 main(PS_INPUT input) : SV_TARGET {
+    // For now just output the vertex color (textures not bound yet)
     return input.color;
 }
 )";
@@ -45,15 +66,15 @@ void DX12Renderer::CreateCubeMesh() {
     // Create cube vertices (pink color)
     Vertex cubeVertices[] = {
         // Front face
-        {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.75f, 0.8f, 1.0f}},  // Pink
-        {{-0.5f,  0.5f, -0.5f}, {1.0f, 0.75f, 0.8f, 1.0f}},
-        {{ 0.5f,  0.5f, -0.5f}, {1.0f, 0.75f, 0.8f, 1.0f}},
-        {{ 0.5f, -0.5f, -0.5f}, {1.0f, 0.75f, 0.8f, 1.0f}},
+        {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.75f, 0.8f, 1.0f}, {0.0f,0.0f}},  // Pink
+        {{-0.5f,  0.5f, -0.5f}, {1.0f, 0.75f, 0.8f, 1.0f}, {0.0f,1.0f}},
+        {{ 0.5f,  0.5f, -0.5f}, {1.0f, 0.75f, 0.8f, 1.0f}, {1.0f,1.0f}},
+        {{ 0.5f, -0.5f, -0.5f}, {1.0f, 0.75f, 0.8f, 1.0f}, {1.0f,0.0f}},
         // Back face
-        {{-0.5f, -0.5f,  0.5f}, {1.0f, 0.75f, 0.8f, 1.0f}},
-        {{-0.5f,  0.5f,  0.5f}, {1.0f, 0.75f, 0.8f, 1.0f}},
-        {{ 0.5f,  0.5f,  0.5f}, {1.0f, 0.75f, 0.8f, 1.0f}},
-        {{ 0.5f, -0.5f,  0.5f}, {1.0f, 0.75f, 0.8f, 1.0f}},
+        {{-0.5f, -0.5f,  0.5f}, {1.0f, 0.75f, 0.8f, 1.0f}, {1.0f,0.0f}},
+        {{-0.5f,  0.5f,  0.5f}, {1.0f, 0.75f, 0.8f, 1.0f}, {1.0f,1.0f}},
+        {{ 0.5f,  0.5f,  0.5f}, {1.0f, 0.75f, 0.8f, 1.0f}, {0.0f,1.0f}},
+        {{ 0.5f, -0.5f,  0.5f}, {1.0f, 0.75f, 0.8f, 1.0f}, {0.0f,0.0f}},
     };
 
     // Create cube indices
@@ -190,8 +211,79 @@ void DX12Renderer::CreateCubeMesh() {
     indexBufferView.SizeInBytes = sizeof(cubeIndices);
 }
 
+void DX12Renderer::UpdateCamera(float dt) {
+    // WASD movement with Shift sprint and mouse-look when right button held
+    static bool mouseCaptured = false;
+    static POINT centerPoint = {};
+    static float logTimer = 0.0f;
+
+    float baseSpeed = 3.0f;
+    bool shiftDown = (GetAsyncKeyState(VK_SHIFT) & 0x8000) != 0;
+    float speed = baseSpeed * (shiftDown ? 3.0f : 1.0f);
+
+    // Mouse capture & look
+    if (GetAsyncKeyState(VK_RBUTTON) & 0x8000) {
+        if (!mouseCaptured) {
+            SetCapture(mHwnd);
+            RECT r;
+            GetWindowRect(mHwnd, &r);
+            centerPoint.x = (r.left + r.right) / 2;
+            centerPoint.y = (r.top + r.bottom) / 2;
+            SetCursorPos(centerPoint.x, centerPoint.y);
+            mouseCaptured = true;
+            std::cout << "Mouse captured for look\n";
+        } else {
+            POINT cur; GetCursorPos(&cur);
+            float dx = float(cur.x - centerPoint.x);
+            float dy = float(cur.y - centerPoint.y);
+            const float sensitivity = 0.0025f;
+            camera.rotation.y += dx * sensitivity;
+            camera.rotation.x += dy * sensitivity;
+            if (camera.rotation.x > 1.5f) camera.rotation.x = 1.5f;
+            if (camera.rotation.x < -1.5f) camera.rotation.x = -1.5f;
+            // keep cursor centered
+            SetCursorPos(centerPoint.x, centerPoint.y);
+        }
+    } else if (mouseCaptured) {
+        ReleaseCapture();
+        mouseCaptured = false;
+        std::cout << "Mouse released\n";
+    }
+
+    // Movement relative to camera orientation
+    XMMATRIX rot = XMMatrixRotationRollPitchYaw(camera.rotation.x, camera.rotation.y, camera.rotation.z);
+    XMVECTOR forward = XMVector3TransformNormal(XMVectorSet(0, 0, 1, 0), rot);
+    XMVECTOR right = XMVector3TransformNormal(XMVectorSet(1, 0, 0, 0), rot);
+    XMVECTOR pos = XMLoadFloat3(&camera.position);
+    bool moved = false;
+    if (GetAsyncKeyState('W') & 0x8000) { pos = XMVectorAdd(pos, XMVectorScale(forward, speed * dt)); moved = true; }
+    if (GetAsyncKeyState('S') & 0x8000) { pos = XMVectorSubtract(pos, XMVectorScale(forward, speed * dt)); moved = true; }
+    if (GetAsyncKeyState('A') & 0x8000) { pos = XMVectorSubtract(pos, XMVectorScale(right, speed * dt)); moved = true; }
+    if (GetAsyncKeyState('D') & 0x8000) { pos = XMVectorAdd(pos, XMVectorScale(right, speed * dt)); moved = true; }
+    XMStoreFloat3(&camera.position, pos);
+
+    // Verbose periodic logging (once per second)
+    logTimer += dt;
+    if (logTimer >= 1.0f) {
+        logTimer = 0.0f;
+        std::cout << "Camera pos: " << camera.position.x << ", " << camera.position.y << ", " << camera.position.z
+                  << " rot: " << camera.rotation.x << ", " << camera.rotation.y << ", " << camera.rotation.z
+                  << " mouseCaptured=" << (mouseCaptured?1:0) << " shift=" << (shiftDown?1:0) << " moved=" << (moved?1:0) << std::endl;
+    }
+}
+
 bool DX12Renderer::Init(HWND hwnd) {
     mHwnd = hwnd;
+
+#if defined(_DEBUG)
+    // Enable D3D12 debug layer when available to get more validation messages
+    {
+        ComPtr<ID3D12Debug> debugController;
+        if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)))) {
+            debugController->EnableDebugLayer();
+        }
+    }
+#endif
 
     // 1. Create device
     if (FAILED(D3D12CreateDevice(nullptr, D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&device)))) {
@@ -329,6 +421,7 @@ bool DX12Renderer::Init(HWND hwnd) {
     D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
         {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
         {"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+        {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 28, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
     };
     psoDesc.InputLayout = {inputLayout, _countof(inputLayout)};
     psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
@@ -362,6 +455,15 @@ bool DX12Renderer::Init(HWND hwnd) {
         throw std::runtime_error("Failed to map constant buffer");
     }
 
+    // Create SRV heap for textures
+    D3D12_DESCRIPTOR_HEAP_DESC srvDesc = {};
+    srvDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+    srvDesc.NumDescriptors = 16;
+    srvDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+    if (FAILED(device->CreateDescriptorHeap(&srvDesc, IID_PPV_ARGS(&srvHeap)))) {
+        throw std::runtime_error("Failed to create SRV heap");
+    }
+
     return true;
 }
 
@@ -375,7 +477,7 @@ void DX12Renderer::Render() {
 
     // Create rotation matrix
     XMMATRIX rotMatrix = XMMatrixRotationY(rotationY);
-    XMMATRIX viewMatrix = XMMatrixTranslation(0.0f, 0.0f, 2.0f);
+    XMMATRIX viewMatrix = camera.GetViewMatrix();
     XMMATRIX projMatrix = XMMatrixPerspectiveFovLH(XM_PIDIV4, 800.0f / 600.0f, 0.1f, 100.0f);
     XMMATRIX worldViewProj = XMMatrixMultiply(rotMatrix, XMMatrixMultiply(viewMatrix, projMatrix));
     
@@ -414,12 +516,21 @@ void DX12Renderer::Render() {
 
     // Set constant buffer
     cmdList->SetGraphicsRootConstantBufferView(0, constantBuffer->GetGPUVirtualAddress());
+    // Bind SRV heap for textures if available
+    if (srvHeap) {
+        ID3D12DescriptorHeap* heaps[] = { srvHeap.Get() };
+        cmdList->SetDescriptorHeaps(_countof(heaps), heaps);
+    }
 
     // Render cube
     cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     cmdList->IASetVertexBuffers(0, 1, &vertexBufferView);
     cmdList->IASetIndexBuffer(&indexBufferView);
     cmdList->DrawIndexedInstanced(indexCount, 1, 0, 0, 0);
+
+    // Render ImGui draw data into the same command list (safe no-op if ImGui not initialized)
+    // ImGuiWrapper::Render requires an ID3D12GraphicsCommandList*; pass raw pointer
+    ::ImGuiWrapper::Render(cmdList.Get());
 
     CD3DX12_RESOURCE_BARRIER barrier2 = CD3DX12_RESOURCE_BARRIER::Transition(
         backBuffer.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);

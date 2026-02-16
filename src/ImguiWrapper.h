@@ -2,6 +2,8 @@
 #include <Windows.h>
 #include <d3d12.h>
 
+class DX12Renderer; // forward declaration for UI helpers
+
 class ImGuiWrapper {
 public:
     // Initialize ImGui renderer (optional). Returns true on success or if ImGui is not present (no-op).
@@ -13,4 +15,9 @@ public:
     static void BeginWindow(const char* title) { /* no-op if ImGui not available */ }
     static void Text(const char* text) { /* no-op */ }
     static void EndWindow() { /* no-op */ }
+    // Advanced UI helpers
+    static void RenderImportUI(DX12Renderer* renderer);
+    static void RenderColorPicker();
+    static bool g_showImportWindow;
+    static bool g_showColorPicker;
 };

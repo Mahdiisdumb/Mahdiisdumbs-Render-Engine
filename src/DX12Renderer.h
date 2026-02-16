@@ -12,6 +12,7 @@ using namespace DirectX;
 struct Vertex {
     XMFLOAT3 position;
     XMFLOAT4 color;
+    XMFLOAT2 uv;
 };
 
 struct TransformData {
@@ -57,6 +58,7 @@ private:
     ComPtr<ID3D12Resource> vertexBuffer;
     ComPtr<ID3D12Resource> indexBuffer;
     ComPtr<ID3D12Resource> constantBuffer;
+    ComPtr<ID3D12DescriptorHeap> srvHeap;
     D3D12_VERTEX_BUFFER_VIEW vertexBufferView;
     D3D12_INDEX_BUFFER_VIEW indexBufferView;
     TransformData* pCbData = nullptr;

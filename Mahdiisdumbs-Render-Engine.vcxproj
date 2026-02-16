@@ -20,7 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Camera.cpp" />
-    <ClCompile Include="src\DX12Renderer_impl.cpp" />
+    <ClCompile Include="src\DX12Renderer.cpp" />
     <ClCompile Include="src\ImguiWrapper.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Model.cpp" />
