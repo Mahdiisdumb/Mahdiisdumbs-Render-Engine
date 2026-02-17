@@ -12,12 +12,14 @@ public:
     static void Render(ID3D12GraphicsCommandList* cmdList);
     static void Shutdown();
     // Simple UI helpers used by the engine to avoid direct dependency on ImGui headers
-    static void BeginWindow(const char* title) { /* no-op if ImGui not available */ }
-    static void Text(const char* text) { /* no-op */ }
-    static void EndWindow() { /* no-op */ }
+    static void BeginWindow(const char* title);
+    static void Text(const char* text);
+    static void EndWindow();
     // Advanced UI helpers
     static void RenderImportUI(DX12Renderer* renderer);
     static void RenderColorPicker();
+    static void RenderControlsWindow();
     static bool g_showImportWindow;
     static bool g_showColorPicker;
+    static bool g_showControlsWindow;
 };

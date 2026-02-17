@@ -1,8 +1,10 @@
 #include <windows.h>
 #include "DX12Renderer.h"
 #include "ImguiWrapper.h"
+#include "imgui/backends/imgui_impl_win32.h"
 #include <iostream>
 #include <DbgHelp.h>
+#define USE_ASSIMP
 
 #pragma comment(lib, "dbghelp.lib")
 
@@ -22,6 +24,10 @@ static LONG WINAPI MyExceptionFilter(EXCEPTION_POINTERS* pExceptionPointers) {
 }
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+#ifdef USE_IMGUI
+    if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wParam, lParam))
+        return TRUE;
+#endif
     switch (msg) {
     case WM_DESTROY:
         PostQuitMessage(0);
@@ -67,7 +73,9 @@ int main() {
         }
 
         // Initialize ImGui (optional)
-        ImGuiWrapper::Init(hwnd, renderer.GetDevice(), renderer.GetCommandQueue(), DXGI_FORMAT_R8G8B8A8_UNORM); // Re-initialized ImGui
+        if (!ImGuiWrapper::Init(hwnd, renderer.GetDevice(), renderer.GetCommandQueue(), DXGI_FORMAT_R8G8B8A8_UNORM)) {
+            std::cerr << "ImGui initialization failed or disabled; UI will be unavailable.\n";
+        }
 
         // Main message loop
         MSG msg = {};
@@ -131,17 +139,33 @@ int main() {
                 }
                 prevColor = curColor;
 
-                ImGuiWrapper::BeginWindow("Inspector");
-                ImGuiWrapper::Text("Use WASD + RMB to move and look. Shift to sprint.");
-                ImGuiWrapper::EndWindow();
+               ImGuiWrapper::BeginWindow("Help");
+               ImGuiWrapper::Text("F1 For help");
+               ImGuiWrapper::EndWindow();
+
+                // Toggle importer window with Ctrl+I
+                static bool prevCtrlI = false;
+                bool curCtrlI = (GetAsyncKeyState('I') & 0x8000) != 0 && ctrl;
+                if (curCtrlI && !prevCtrlI) {
+                    ImGuiWrapper::g_showImportWindow = !ImGuiWrapper::g_showImportWindow;
+                }
+                prevCtrlI = curCtrlI;
+
+                // F1 -> Toggle controls window
+                static bool prevF1 = false;
+                bool curF1 = (GetAsyncKeyState(VK_F1) & 0x8000) != 0;
+                if (curF1 && !prevF1) {
+                    ImGuiWrapper::g_showControlsWindow = !ImGuiWrapper::g_showControlsWindow;
+                }
+                prevF1 = curF1;
+
+                // Build ImGui windows for this frame BEFORE rendering so DX12Renderer::Render can submit drawdata
+                ImGuiWrapper::RenderImportUI(&renderer);
+                ImGuiWrapper::RenderColorPicker();
+                ImGuiWrapper::RenderControlsWindow();
 
                 renderer.UpdateCamera(1.0f / 60.0f);
                 renderer.Render();
-
-                // Render ImGui UI and helper windows
-                ImGuiWrapper::Render(renderer.GetCommandList());
-                ImGuiWrapper::RenderImportUI(&renderer);
-                ImGuiWrapper::RenderColorPicker();
             }
         }
 

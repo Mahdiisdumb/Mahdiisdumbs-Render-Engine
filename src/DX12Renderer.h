@@ -5,7 +5,6 @@
 #include "directx/d3dx12.h"
 #include "Camera.h"
 #include "Model.h"
-
 using namespace Microsoft::WRL;
 using namespace DirectX;
 

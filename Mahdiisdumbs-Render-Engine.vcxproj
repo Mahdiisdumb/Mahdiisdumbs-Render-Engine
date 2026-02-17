@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\assimp_stubs.cpp" />
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\DX12Renderer.cpp" />
     <ClCompile Include="src\ImguiWrapper.cpp" />
@@ -163,7 +164,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>
-        d3d12.lib;dxgi.lib;dxguid.lib;%(AdditionalDependencies)
+        d3d12.lib;dxgi.lib;dxguid.lib;assimp-vc143-mt.lib;%(AdditionalDependencies)
       </AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>

@@ -2,6 +2,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#define USE_ASSIMP
 
 namespace Utils {
     inline std::string ReadFile(const std::string& path) {

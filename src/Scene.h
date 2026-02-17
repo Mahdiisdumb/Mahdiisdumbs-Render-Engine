@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 #include "Model.h"
-
+#define USE_ASSIMP
 class Scene {
 public:
     std::vector<Model*> models;

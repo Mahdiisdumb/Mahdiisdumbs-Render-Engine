@@ -1,12 +1,21 @@
+#define USE_IMGUI
 #include "ImguiWrapper.h"// Storage for header-declared static flags (always present regardless of USE_IMGUI)
+#include "DX12Renderer.h"
 bool ImGuiWrapper::g_showImportWindow = false;
 bool ImGuiWrapper::g_showColorPicker = false;
+bool ImGuiWrapper::g_showControlsWindow = false;
 
 #ifdef USE_IMGUI
 #include "imgui/imgui.h"
-#include "imgui/imgui_impl_win32.h"
-#include "imgui/imgui_impl_dx12.h"
 #include <wrl.h>
+
+// Include implementation files here to build single-translation-unit variant used by this project.
+#include "imgui/imgui.cpp"
+#include "imgui/imgui_draw.cpp"
+#include "imgui/imgui_tables.cpp"
+#include "imgui/imgui_widgets.cpp"
+#include "imgui/backends/imgui_impl_win32.cpp"
+#include "imgui/backends/imgui_impl_dx12.cpp"
 
 using Microsoft::WRL::ComPtr;
 
@@ -46,6 +55,23 @@ bool ImGuiWrapper::Init(HWND hwnd, ID3D12Device* device, ID3D12CommandQueue* que
     return true;
 }
 
+void ImGuiWrapper::RenderControlsWindow() {
+    if (!g_showControlsWindow) return;
+    ImGui::Begin("Controls", &g_showControlsWindow);
+    ImGui::Text("Camera Movement:");
+    ImGui::Text("  W/A/S/D - Move");
+    ImGui::Text("  RMB + Move Mouse - Look Around");
+    ImGui::Text("  Shift - Sprint");
+    ImGui::Separator();
+    ImGui::Text("Hotkeys:");
+    ImGui::Text("  F1 - Toggle this controls window");
+    ImGui::Text("  Ctrl+O - Open Model");
+    ImGui::Text("  Ctrl+T - Open Texture");
+    ImGui::Text("  Ctrl+I - Toggle Importer window");
+    ImGui::Text("  Ctrl+Alt+C - Toggle Color Picker");
+    ImGui::End();
+}
+
 void ImGuiWrapper::NewFrame() {
     ImGui_ImplDX12_NewFrame();
     ImGui_ImplWin32_NewFrame();
@@ -67,23 +93,68 @@ void ImGuiWrapper::Shutdown() {
     ImGui::DestroyContext();
 }
 
-void ImGuiWrapper::BeginWindow(const char* title) { ImGui::Begin(title); }
-void ImGuiWrapper::Text(const char* text) { ImGui::Text("%s", text); }
-void ImGuiWrapper::EndWindow() { ImGui::End(); }
+void ImGuiWrapper::BeginWindow(const char* title) { 
+#ifdef USE_IMGUI
+    ImGui::Begin(title); 
+#endif
+}
+void ImGuiWrapper::Text(const char* text) {
+#ifdef USE_IMGUI
+    ImGui::Text("%s", text);
+#endif
+}
+void ImGuiWrapper::EndWindow() {
+#ifdef USE_IMGUI
+    ImGui::End();
+#endif
+}
 
 // High level UI helpers (definitions)
-bool ImGuiWrapper::g_showImportWindow = false;
-bool ImGuiWrapper::g_showColorPicker = false;
 static float g_color[4] = {1.0f, 0.75f, 0.8f, 1.0f};
 
 void ImGuiWrapper::RenderImportUI(DX12Renderer* renderer) {
     if (!g_showImportWindow) return;
     ImGui::Begin("Importer", &g_showImportWindow);
+
+#ifdef USE_ASSIMP
+    ImGui::Text("Assimp: Enabled");
+#else
+    ImGui::Text("Assimp: Disabled (define USE_ASSIMP to enable)");
+#endif
+
+    ImGui::Text("Hotkeys: Ctrl+O = Open Model, Ctrl+T = Open Texture, Ctrl+Alt+C = Toggle Color Picker");
+
     if (ImGui::Button("Load Model (Ctrl+O)")) {
-        // user will use hotkey; actual file dialog handled externally
+        // Show Win32 open file dialog
+        OPENFILENAMEA ofn;
+        CHAR szFile[MAX_PATH] = {0};
+        ZeroMemory(&ofn, sizeof(ofn));
+        ofn.lStructSize = sizeof(ofn);
+        ofn.hwndOwner = GetActiveWindow();
+        ofn.lpstrFile = szFile;
+        ofn.nMaxFile = MAX_PATH;
+        ofn.lpstrFilter = "Model Files\0*.fbx;*.obj\0All\0*.*\0";
+        ofn.Flags = OFN_FILEMUSTEXIST;
+        if (GetOpenFileNameA(&ofn)) {
+            if (renderer) renderer->LoadModel(szFile);
+        }
     }
+
     if (ImGui::Button("Load Texture (Ctrl+T)")) {
+        OPENFILENAMEA ofn;
+        CHAR szFile[MAX_PATH] = {0};
+        ZeroMemory(&ofn, sizeof(ofn));
+        ofn.lStructSize = sizeof(ofn);
+        ofn.hwndOwner = GetActiveWindow();
+        ofn.lpstrFile = szFile;
+        ofn.nMaxFile = MAX_PATH;
+        ofn.lpstrFilter = "Image Files\0*.png;*.jpg;*.jpeg;*.dds\0All\0*.*\0";
+        ofn.Flags = OFN_FILEMUSTEXIST;
+        if (GetOpenFileNameA(&ofn)) {
+            if (renderer) renderer->LoadTexture(szFile);
+        }
     }
+
     ImGui::End();
 }
 
@@ -104,5 +175,6 @@ void ImGuiWrapper::Shutdown() {}
 // Non-UI (no ImGui) stubs
 void ImGuiWrapper::RenderImportUI(DX12Renderer* renderer) { (void)renderer; }
 void ImGuiWrapper::RenderColorPicker() {}
+void ImGuiWrapper::RenderControlsWindow() { (void)g_showControlsWindow; }
 
 #endif

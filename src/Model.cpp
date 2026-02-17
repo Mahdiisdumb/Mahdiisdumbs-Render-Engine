@@ -1,9 +1,10 @@
 #include "Model.h"
 #include <iostream>
+#if !defined(USE_ASSIMP)
+// Prefer enabling via project settings; do not force-enable globally if project defines it.
+// To enable Assimp linking, define USE_ASSIMP in your project settings and link the assimp library.
+#endif
 #ifdef USE_ASSIMP
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
 #endif
 
 bool Model::LoadFBX(const std::string& path, ID3D12Device* device, ID3D12GraphicsCommandList* cmdList) {

@@ -9,7 +9,6 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-
 class Model {
 public:
     bool LoadFBX(const std::string& path, ID3D12Device* device, ID3D12GraphicsCommandList* cmdList);
