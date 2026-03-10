@@ -25,3 +25,4 @@ libs/imgui/*.exe
 Thumbs.db
 .DS_Store
 .vs/
+imgui.ini
