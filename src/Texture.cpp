@@ -1,3 +1,4 @@
+//so everything here is fucking wrong it doesnt apply the said texture to what ever object is in the scene what could be the cause of this???
 #define STB_IMAGE_IMPLEMENTATION
 #include "Texture.h"
 #include <stb_image.h>
@@ -34,7 +35,7 @@ bool Texture::LoadFromFile(const std::string& path, ID3D12Device* device, ID3D12
     }
 
     // Create upload buffer
-    UINT64 uploadBufferSize = GetRequiredIntermediateSize(texture.Get(), 0, 1);
+	UINT64 uploadBufferSize = GetRequiredIntermediateSize(texture.Get(), 0, 1); //ill complete ignore this sense its just a helper function that calculates the required size for the upload buffer so no seg faults will occur
 
     ComPtr<ID3D12Resource> uploadBuffer;
     D3D12_HEAP_PROPERTIES uploadHeapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
@@ -51,7 +52,7 @@ bool Texture::LoadFromFile(const std::string& path, ID3D12Device* device, ID3D12
     subresource.RowPitch = width * 4;
     subresource.SlicePitch = subresource.RowPitch * height;
 
-    UpdateSubresources(cmdList, texture.Get(), uploadBuffer.Get(), 0, 0, 1, &subresource);
+    UpdateSubresources(cmdList, texture.Get(), uploadBuffer.Get(), 0, 0, 1, &subresource);//another helper
 
     // Transition to pixel shader resource
     CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(texture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
@@ -60,3 +61,4 @@ bool Texture::LoadFromFile(const std::string& path, ID3D12Device* device, ID3D12
     stbi_image_free(data);
     return true;
 }
+//i see the reason why its devoided of any texture application is because i forgot to create a shader resource view for the texture and bind it to the pipeline so the shader can actually sample from it, ill add that in the next commit because im too lazy

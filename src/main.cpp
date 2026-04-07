@@ -61,17 +61,46 @@ int main() {
         RegisterClassW(&wc);
 
         // Create window
-        HWND hwnd = CreateWindowExW(0,
+        //its just four errors what the fuck is wrong with me 😭😭
+        //now i understand its not the compiler being mean its me being an absolute IDIOT!e
+        HWND hwnd = CreateWindowExW( //strange they connect meaning the argument is probably invalid and yea it was invalid i fixed it but i need 4 more arguments probably what comes afdter W and H
+            //the thing is int is incompatible with HWND so lets see the reason
+            0,
             wc.lpszClassName,
             L"Mahdiisdumbs Render Engine",
-            RegisterClassW(&wc),
+// commented out cause why not            RegisterClassW(&wc), // its somthing like this
             WS_OVERLAPPEDWINDOW,
             CW_USEDEFAULT,
             CW_USEDEFAULT,
-            800,
-            600,
-            hInstance);
+            800,//normal
+            600,//normal
+           //down here is the what ive fucking needed the nullptrs
+            nullptr,
+            nullptr,
+            hInstance, //i hope this thing doesnt break it again
+            nullptr
+            //i need somthing here i just dont know ill read some docs
+            /*err cascadings so thats the problem*/); //no more same errors but syntax erorr with ) weird i mean weird maybe because im dumbass
+		//every error fixed but "syntax error: ')'" is it HIGH?! or am i that much of an IMBECILE that i cant even write a function call without syntax errors? ✌️🥀
+        // never mind i got jumpscared by my compilation completed sound (scooby doos laugh but retarded)
+        //now theres too few args in the call and it doesnt take 8 args are we serious 😭😭
+        //just learnt we needed 12 args WTF am i gonna get 12 args from?!
+		//"C2660 will occur if a derived class hides a function." quick question microsoft but theres no hidden function or class so why the fuck is this happening
+        //"C2660 can occur if you define a new operator in a template class, but where the new operator creates an object whose type is other than the enclosing type." now this is my problem!
+		//AI is for loosers ive been using it so thats hypocritical of me but now im using my brain finally 🥀🥀🥀✌️✌️😭😭😭
+        //theoritically what would happen if i comment all of this and nevermind because it returns unidentified 😭
+        /*// C2660.cpp
+void func( int, int ) {}
 
+int main() {
+   func( 1 );   // C2660 func( int ) not declared
+   func( 1, 0 );   // OK
+} ive found a lead and my four missing arguments from the documentation ive read says im misisng  int       nWidth,
+  int       nHeight,
+  HWND      hWndParent,
+  HMENU     hMenu,
+  HINSTANCE hInstance,
+  LPVOID    lpParam ehhhh ill try to equip those */
         if (!hwnd) {
             std::cerr << "Failed to create window\n";
             return -1;

@@ -1,3 +1,4 @@
+//now for the model loading part uses assimp theres a problem were the model doesnt even load like the texture bug i stated in the texture cpp
 #include "Model.h"
 #include <iostream>
 #if !defined(USE_ASSIMP)
@@ -16,7 +17,7 @@ bool Model::LoadFBX(const std::string& path, ID3D12Device* device, ID3D12Graphic
         std::cerr << "Assimp failed to load or no meshes: " << importer.GetErrorString() << std::endl;
         return false;
     }
-
+    //this loads the fbx into the fucking gpu memory
     // For now, load only the first mesh
     aiMesh* mesh = scene->mMeshes[0];
     vertices.clear();
@@ -42,7 +43,7 @@ bool Model::LoadFBX(const std::string& path, ID3D12Device* device, ID3D12Graphic
             v.uv = {0.0f, 0.0f};
         }
         vertices.push_back(v);
-    }
+    } //vertices and indeces and maybe bones im not sure about that one
 
     // collect indices
     for (unsigned int f = 0; f < mesh->mNumFaces; ++f) {
@@ -81,7 +82,7 @@ bool Model::LoadFBX(const std::string& path, ID3D12Device* device, ID3D12Graphic
                     pendingTexturePath = tpath;
             }
         }
-    }
+	} //most of the fucking time the texture is not found in the fbx file so it just doesnt load the texture and then the model is just pink so great what dumbass thought this was a good idea wait it was me =|
 
     return true;
 #else
@@ -92,11 +93,11 @@ bool Model::LoadFBX(const std::string& path, ID3D12Device* device, ID3D12Graphic
 
 bool Model::LoadTexture(const std::string& path, ID3D12Device* device, ID3D12GraphicsCommandList* cmdList) {
     return texture.LoadFromFile(path, device, cmdList);
-}
+} //loads the texture which *sips tea* is fucking invisable
 
 void Model::Draw() {
     // placeholder: send vertex + bone matrices to GPU
-}
+} //what the fuck was this for then 😭
 
 void Model::ApplyBoneTransform(int boneIndex, const math::vec3& pos, const math::quat& rot) {
     if (boneIndex < 0 || boneIndex >= bones.size()) return;
@@ -109,3 +110,4 @@ void Model::ApplyBoneTransform(int boneIndex, const math::vec3& pos, const math:
     bones[boneIndex].rotation.z = rot.z;
     bones[boneIndex].rotation.w = rot.w;
 }
+//yea the problem was the same reason as the texture there is no function for laoding fbx models so it sits in vram
