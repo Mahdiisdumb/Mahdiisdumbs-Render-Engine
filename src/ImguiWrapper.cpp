@@ -5,6 +5,9 @@ bool ImGuiWrapper::g_showImportWindow = false;
 bool ImGuiWrapper::g_showColorPicker = false;
 bool ImGuiWrapper::g_showControlsWindow = false;
 
+// Definition of global UI mode flag declared in ImguiWrapper.h
+bool g_uiMode = false;
+
 #ifdef USE_IMGUI
 #include "imgui/imgui.h"
 #include <wrl.h>
@@ -26,6 +29,9 @@ bool ImGuiWrapper::Init(HWND hwnd, ID3D12Device* device, ID3D12CommandQueue* que
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     ImGui::StyleColorsDark();
+
+    // Default to not capturing UI until user toggles it
+    g_uiMode = false;
 
     D3D12_DESCRIPTOR_HEAP_DESC desc = {};
     desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
@@ -69,6 +75,7 @@ void ImGuiWrapper::RenderControlsWindow() {
     ImGui::Text("  Ctrl+T - Open Texture");
     ImGui::Text("  Ctrl+I - Toggle Importer window");
     ImGui::Text("  Ctrl+Alt+C - Toggle Color Picker");
+	ImGui::Text("  U - Toggle UI Mode (If ennabled scene interaction ceases to exist and you can finally use the UI!)");
     ImGui::End();
 }
 

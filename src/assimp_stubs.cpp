@@ -3,7 +3,7 @@ Nothing
 because I have the linker 🥀
 so fuck this file, it's a placeholder
 
-conversation with myself {
+conversation with I made up {
   (MSVC) So have I, Mahdi, I've been here for years. Who the FUCK is that?!
   (Me) You don't know who that is.
   (MSVC) Oh, I wanna know who that is, Mahdi! Show me!
@@ -27,16 +27,16 @@ conversation with myself {
   (MSVC) Don't tell me to calm down when I do shit and there's no CMake, but apparently a Stub exists!
   (Me) Look, MSVC, you FUCKING break when it doesn't exist.
   (MSVC) He should be the next face of your projects! Master Stub! Stub Bait! Stub FUCK!
-  (MSVC) Oh Mahdi, look, look, Stub...
-  (MSVC) You know he's kind of cool. I guess kind of cool.
-  (Me) What does he do?
+  (Mahdi) Oh Compiler, look, look, Stub...
+  (Mahdi) You know he's kind of cool. I guess kind of cool.
+  (MSVC) What does he do?
   (MSVC) I do compiling and I can build!
   (MSVC) What the FUCK does he do?!
   (Me) Nothing.
   (MSVC)Nothing. That's exactly right, Mahdi. He's not special at all.
   (MSVC) He's just some make-a-wish kid's character that they put in the Render Engine.
-  (MSVC) Hey little Billy, congratulations. I know you're gonna die in a week, but that's okay, because that crayon drawing you did? They put it in the Render Engine and they named it FUCKING Stub.
+  (MSVC) Hey little Billy, congratulations. I know you're gonna die in a week, but that's okay, because that crayon drawing of useless dialouge of cpp you did? They put it in the Render Engine and they named it FUCKING Stub.
 }
 
-Thank you for watching my shitty diag.
+Thank you for reading my shitty diag thats completly fucking useless if i just you know FUCKING TELL THE PROJECT IT DOESNT EXIST BUT IM TOO LAZY TOO!
 */

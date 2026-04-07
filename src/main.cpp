@@ -2,6 +2,10 @@
 #include "DX12Renderer.h"
 #include "ImguiWrapper.h"
 #include "imgui/backends/imgui_impl_win32.h"
+#include <imgui/imgui.h>
+
+// Forward-declare the Win32 WndProc handler from the ImGui Win32 backend (header keeps it inside a #if 0 block)
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 #include <iostream>
 #include <DbgHelp.h>
 #define USE_ASSIMP
@@ -19,15 +23,17 @@ static LONG WINAPI MyExceptionFilter(EXCEPTION_POINTERS* pExceptionPointers) {
         MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), hFile, MiniDumpWithDataSegs, &mei, nullptr, nullptr);
         CloseHandle(hFile);
     }
-    MessageBoxA(nullptr, "The application crashed. A crash dump was written to crash.dmp", "Crash", MB_OK | MB_ICONERROR);
+    MessageBoxA(nullptr, "The application crashed. A crash dump was written to crash.dmp", "Crash", MB_OK | MB_ICONERROR); // dumping of the fucking crash dump wow am i really an idiot?
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-#ifdef USE_IMGUI
-    if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wParam, lParam))
-        return TRUE;
-#endif
+    // Forward messages to ImGui only when UI mode is enabled and ImGui is initialized
+    extern bool g_uiMode;
+    if (ImGui::GetCurrentContext() && g_uiMode) {
+        if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wParam, lParam))
+            return TRUE;
+    }
     switch (msg) {
     case WM_DESTROY:
         PostQuitMessage(0);
@@ -39,24 +45,32 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 int main() {
     try {
         SetUnhandledExceptionFilter(MyExceptionFilter);
+        // Ensure ImGui global exists
+        g_uiMode = false;
+        // Global UI interaction toggle. When true, ImGui handles input and scene is not controlled.
+        static bool g_uiMode_local = false;
+        // expose to ImGuiWrapper/global via external linkage in this translation unit
+        g_uiMode = g_uiMode_local;
         HINSTANCE hInstance = GetModuleHandle(nullptr);
 
         // Register window class
         WNDCLASSW wc = {};
         wc.lpfnWndProc = WndProc;
         wc.hInstance = hInstance;
-        wc.lpszClassName = L"MahdiisdumbsRE";
+		wc.lpszClassName = L"MahdiisdumbsRE"; // hey look its the render engine name in the window class name how original 🥀🥀🥀😭😭😭
         RegisterClassW(&wc);
 
         // Create window
-        HWND hwnd = CreateWindowExW(
-            0,
+        HWND hwnd = CreateWindowExW(0,
             wc.lpszClassName,
             L"Mahdiisdumbs Render Engine",
+            RegisterClassW(&wc),
             WS_OVERLAPPEDWINDOW,
-            CW_USEDEFAULT, CW_USEDEFAULT, 800, 600,
-            nullptr, nullptr, hInstance, nullptr
-        );
+            CW_USEDEFAULT,
+            CW_USEDEFAULT,
+            800,
+            600,
+            hInstance);
 
         if (!hwnd) {
             std::cerr << "Failed to create window\n";
@@ -90,6 +104,15 @@ int main() {
                 // Hotkeys handling
                 bool ctrl = (GetAsyncKeyState(VK_CONTROL) & 0x8000) != 0;
                 bool alt = (GetAsyncKeyState(VK_MENU) & 0x8000) != 0;
+
+                // Toggle UI interaction mode with 'U' key (press to toggle)
+                static bool prevToggle = false;
+                bool curToggle = (GetAsyncKeyState('U') & 0x8000) != 0;
+                if (curToggle && !prevToggle) {
+                    g_uiMode = !g_uiMode;
+                    std::cout << "UI mode " << (g_uiMode ? "ENABLED" : "DISABLED") << std::endl;
+                }
+                prevToggle = curToggle;
 
                 // Ctrl+O -> Open model
                 static bool prevCtrlO = false;
@@ -164,7 +187,8 @@ int main() {
                 ImGuiWrapper::RenderColorPicker();
                 ImGuiWrapper::RenderControlsWindow();
 
-                renderer.UpdateCamera(1.0f / 60.0f);
+                // When UI mode is enabled, skip scene interaction (camera updates). Still render scene.
+                if (!g_uiMode) renderer.UpdateCamera(1.0f / 60.0f);
                 renderer.Render();
             }
         }

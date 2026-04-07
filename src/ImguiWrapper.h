@@ -23,3 +23,6 @@ public:
     static bool g_showColorPicker;
     static bool g_showControlsWindow;
 };
+
+// Global UI interaction toggle. When true, ImGui receives input and the scene should not process controls.
+extern bool g_uiMode;
